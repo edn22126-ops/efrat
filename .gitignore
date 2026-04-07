@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+
+# Docker / local data volumes
+postgres_data/
+redis_data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / credentials — NEVER commit these
+*.pem
+*.key
+aws_credentials
+secrets.yaml
+
+# Uploaded documents — files go to S3, NOT into git
+uploads/
+evidence/
+documents/
+*.pdf
+*.docx
+*.xlsx
+*.jpg
+*.jpeg
+*.png
+*.tiff
+*.mp4
+*.zip
