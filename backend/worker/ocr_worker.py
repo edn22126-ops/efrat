@@ -43,8 +43,7 @@ POLL_WAIT_SECONDS = 20  # SQS long-poll
 # ---------------------------------------------------------------------------
 
 def get_sync_engine():
-    url = DATABASE_URL.replace("+asyncpg", "")
-    return create_engine(url, pool_pre_ping=True)
+    return create_engine(DATABASE_URL, pool_pre_ping=True)
 
 
 # ---------------------------------------------------------------------------

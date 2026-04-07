@@ -52,6 +52,13 @@ def enqueue_ocr_job(document_id: str, s3_key: str) -> None:
 
 
 def compute_audit_hash(document_id: str, action: str, detail: str | None, prev_hash: str | None) -> str:
-    """Return SHA-256 hash that chains this audit entry to the previous one."""
+    """Return SHA-256 hash that chains this audit entry to the previous one.
+
+    Payload format (pipe-delimited, UTF-8):
+        ``{document_id}|{action}|{detail}|{prev_hash}``
+
+    Empty ``detail`` or ``prev_hash`` values are represented as empty strings
+    so the format remains deterministic and can be verified by external tools.
+    """
     payload = f"{document_id}|{action}|{detail or ''}|{prev_hash or ''}"
     return hashlib.sha256(payload.encode()).hexdigest()
