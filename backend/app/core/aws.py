@@ -1,6 +1,9 @@
 """AWS helper – S3 pre-signed URLs and SQS dispatch."""
+import hashlib
 import json
+
 import boto3
+
 from app.core.config import settings
 
 
@@ -46,3 +49,9 @@ def enqueue_ocr_job(document_id: str, s3_key: str) -> None:
         QueueUrl=settings.sqs_queue_url,
         MessageBody=json.dumps({"document_id": document_id, "s3_key": s3_key}),
     )
+
+
+def compute_audit_hash(document_id: str, action: str, detail: str | None, prev_hash: str | None) -> str:
+    """Return SHA-256 hash that chains this audit entry to the previous one."""
+    payload = f"{document_id}|{action}|{detail or ''}|{prev_hash or ''}"
+    return hashlib.sha256(payload.encode()).hexdigest()

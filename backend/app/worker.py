@@ -3,7 +3,6 @@ import asyncio
 import hashlib
 import json
 import logging
-import time
 
 import boto3
 from sqlalchemy import select
