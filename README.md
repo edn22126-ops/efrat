@@ -117,11 +117,11 @@ Copy `.env.example` to `.env` and fill in the values:
 ### 4.1 S3 bucket
 
 ```bash
-# Create the bucket
+# Create the bucket (us-east-1 is the default and needs no LocationConstraint)
 aws s3api create-bucket \
   --bucket plms-documents \
-  --region us-east-1 \
-  --create-bucket-configuration LocationConstraint=us-east-1
+  --region us-east-1
+# For any other region, add: --create-bucket-configuration LocationConstraint=<region>
 
 # Block public access
 aws s3api put-public-access-block \
