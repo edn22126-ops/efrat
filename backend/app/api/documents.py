@@ -1,6 +1,5 @@
 """Documents router – list, get, update, delete."""
 import uuid
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -9,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
-from app.models.document import Document, Tag
+from app.models.document import Document
 
 router = APIRouter()
 
@@ -25,19 +24,19 @@ class DocumentOut(BaseModel):
     id: uuid.UUID
     filename: str
     s3_key: str
-    content_type: Optional[str]
-    sha256: Optional[str]
+    content_type: str | None
+    sha256: str | None
     ocr_status: str
-    category: Optional[str]
-    tags: List[TagOut] = []
+    category: str | None
+    tags: list[TagOut] = []
 
     model_config = {"from_attributes": True}
 
 
-@router.get("/", response_model=List[DocumentOut])
+@router.get("/", response_model=list[DocumentOut])
 async def list_documents(
-    category: Optional[str] = None,
-    tag: Optional[str] = None,
+    category: str | None = None,
+    tag: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Document).options(selectinload(Document.tags))
