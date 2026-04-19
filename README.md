@@ -31,9 +31,13 @@ efrat/
 │   │   ├── api/           # Routers: documents, upload, search
 │   │   ├── models/        # ORM models (Document, Tag, AuditLog)
 │   │   ├── db/            # DB session
-│   │   ├── core/          # Config, AWS helpers
-│   │   └── worker.py      # OCR SQS worker
+│   │   └── core/          # Config, AWS helpers
+│   ├── worker/
+│   │   └── ocr_worker.py  # OCR SQS worker skeleton
+│   ├── tests/
+│   │   └── test_api.py    # Smoke tests
 │   ├── migrations/        # Alembic DB migrations
+│   ├── pyproject.toml     # ruff + pytest config
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── tools/

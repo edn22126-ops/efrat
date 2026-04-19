@@ -1,15 +1,14 @@
 """Upload router – generate pre-signed S3 URL and register document metadata."""
-import hashlib
 import uuid
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.aws import generate_presigned_upload_url, enqueue_ocr_job
+from app.core.aws import compute_audit_hash, enqueue_ocr_job, generate_presigned_upload_url
 from app.db.session import get_db
-from app.models.document import Document, Tag, AuditLog
+from app.models.document import AuditLog, Document, Tag
 
 router = APIRouter()
 
@@ -17,8 +16,8 @@ router = APIRouter()
 class PresignedRequest(BaseModel):
     filename: str
     content_type: str
-    category: Optional[str] = None
-    tags: List[str] = []
+    category: str | None = None
+    tags: list[str] = []
 
 
 class PresignedResponse(BaseModel):
@@ -57,8 +56,15 @@ async def request_presigned_url(
     for tag_name in body.tags:
         db.add(Tag(document_id=doc_id, name=tag_name.strip()))
 
+    entry_hash = compute_audit_hash(str(doc_id), "presign_requested", f"key={s3_key}", None)
     db.add(
-        AuditLog(document_id=doc_id, action="presign_requested", detail=f"key={s3_key}")
+        AuditLog(
+            document_id=doc_id,
+            action="presign_requested",
+            detail=f"key={s3_key}",
+            prev_hash=None,
+            entry_hash=entry_hash,
+        )
     )
 
     await db.commit()
@@ -69,13 +75,12 @@ async def request_presigned_url(
 
 class ConfirmRequest(BaseModel):
     document_id: uuid.UUID
-    sha256: Optional[str] = None
+    sha256: str | None = None
 
 
 @router.post("/confirm")
 async def confirm_upload(body: ConfirmRequest, db: AsyncSession = Depends(get_db)):
     """Called after client has PUT the file to S3.  Triggers OCR job."""
-    from sqlalchemy import select
 
     result = await db.execute(select(Document).where(Document.id == body.document_id))
     doc = result.scalar_one_or_none()
@@ -83,7 +88,26 @@ async def confirm_upload(body: ConfirmRequest, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
 
     doc.sha256 = body.sha256
-    db.add(AuditLog(document_id=doc.id, action="upload_confirmed", detail=f"sha256={body.sha256}"))
+
+    prev_result = await db.execute(
+        select(AuditLog)
+        .where(AuditLog.document_id == doc.id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(1)
+    )
+    prev_log = prev_result.scalar_one_or_none()
+    prev_hash = prev_log.entry_hash if prev_log else None
+    detail = f"sha256={body.sha256}"
+    entry_hash = compute_audit_hash(str(doc.id), "upload_confirmed", detail, prev_hash)
+    db.add(
+        AuditLog(
+            document_id=doc.id,
+            action="upload_confirmed",
+            detail=detail,
+            prev_hash=prev_hash,
+            entry_hash=entry_hash,
+        )
+    )
 
     await db.commit()
 

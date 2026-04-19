@@ -1,9 +1,8 @@
 """Search router – full-text search over OCR-extracted text."""
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -15,17 +14,17 @@ router = APIRouter()
 class SearchResult(BaseModel):
     id: str
     filename: str
-    category: Optional[str]
+    category: str | None
     ocr_status: str
-    snippet: Optional[str]
+    snippet: str | None
 
     model_config = {"from_attributes": True}
 
 
-@router.get("/", response_model=List[SearchResult])
+@router.get("/", response_model=list[SearchResult])
 async def search_documents(
     q: str = Query(..., min_length=1, description="Search term"),
-    category: Optional[str] = Query(None),
+    category: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Document).where(

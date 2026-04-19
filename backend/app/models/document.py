@@ -1,7 +1,6 @@
 """ORM models: Document, Tag, AuditLog."""
 import enum
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     Column,
@@ -10,15 +9,15 @@ from sqlalchemy import (
     ForeignKey,
     String,
     Text,
+    Uuid,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 
 
-class OcrStatus(str, enum.Enum):
+class OcrStatus(enum.StrEnum):
     pending = "pending"
     processing = "processing"
     done = "done"
@@ -28,7 +27,7 @@ class OcrStatus(str, enum.Enum):
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = Column(String(512), nullable=False)
     s3_key = Column(String(1024), nullable=False, unique=True)
     content_type = Column(String(256), nullable=True)
@@ -51,8 +50,8 @@ class Document(Base):
 class Tag(Base):
     __tablename__ = "tags"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(Uuid(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     name = Column(String(256), nullable=False)
 
     document = relationship("Document", back_populates="tags")
@@ -61,8 +60,8 @@ class Tag(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(Uuid(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     action = Column(String(128), nullable=False)
     detail = Column(Text, nullable=True)
     prev_hash = Column(String(64), nullable=True)

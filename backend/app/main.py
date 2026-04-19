@@ -5,8 +5,7 @@ FastAPI application entry point.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import documents, upload, search
-from app.db.session import engine
+from app.api import documents, search, upload
 from app.models import base  # noqa: F401 – registers all ORM models
 
 app = FastAPI(
@@ -25,6 +24,11 @@ app.add_middleware(
 app.include_router(documents.router, prefix="/documents", tags=["Documents"])
 app.include_router(upload.router, prefix="/upload", tags=["Upload"])
 app.include_router(search.router, prefix="/search", tags=["Search"])
+
+
+@app.get("/healthz", tags=["Health"])
+async def healthz():
+    return {"status": "ok"}
 
 
 @app.get("/health", tags=["Health"])
